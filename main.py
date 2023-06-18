@@ -1,47 +1,57 @@
-import socketio
+import json
+import time
+
 import eventlet
-import random
+import socketio
 
-# create a Socket.IO server
-sio = socketio.Server(
-    async_mode='eventlet',
-    cors_allowed_origins="*",
-    transports=['websocket', 'polling'],
-)
+from device.devices import EmpaticaE4
+
+eventlet.monkey_patch()
 
 
-# event handler for new connections
-@sio.event
-def connect(sid, environ):
-    print('connect ', sid)
+class SocketServer:
 
+    def __init__(self):
+        self.sio = socketio.Server(
+            async_mode='eventlet',
+            cors_allowed_origins="*",
+            transports=['websocket', 'polling'],
+        )
+        self.app = socketio.WSGIApp(self.sio)
 
-# event handler for a message
-@sio.event
-def message(sid, data):
-    print('message ', data)
+        @self.sio.event
+        def connect(sid, environ):
+            print('connect ', sid)
 
+    def broadcast(self, data):
+        json_data = json.dumps(data, default=lambda x: x.to_dict())
+        self.sio.emit('message', json_data)
 
-# event handler for disconnections
-@sio.event
-def disconnect(sid):
-    print('disconnect ', sid)
-
-
-def background_task():
-    """Example of how to send server generated events to clients."""
-    while True:
-        number = random.randint(1, 100)  # generate a random number
-        sio.emit('message', {'data': number})
-        eventlet.sleep(1)  # delay for 1 second
+    def start(self, port=5000):
+        print(f"Server running on port {port}")
+        eventlet.wsgi.server(eventlet.listen(('0.0.0.0', port)), self.app)
 
 
 if __name__ == '__main__':
-    # wrap with a WSGI application
-    app = socketio.WSGIApp(sio)
+    # initialize instances
+    server = SocketServer()
+    e4 = EmpaticaE4()
 
-    # start the background task
-    eventlet.spawn(background_task)
+    # start devices
+    e4.start()
 
-    print("Server running on port 5000")
-    eventlet.wsgi.server(eventlet.listen(('0.0.0.0', 5000)), app)
+
+    def consume_data():
+        print("Start consuming data")
+        while True:
+            data = e4.consume_data()
+            if len(data) > 0:
+                server.broadcast(data)
+            print(f"Broadcast {len(data)} data points")
+            time.sleep(0.5)
+
+
+    eventlet.spawn(consume_data)
+
+    # start server
+    server.start()
