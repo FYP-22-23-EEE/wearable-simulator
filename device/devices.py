@@ -55,6 +55,6 @@ class EmpaticaE4(Device):
 
     def __init__(self):
         super().__init__(
-            device_type=DeviceType.EMPATICA_E4,
+            device_type=DeviceType.E4,
             frequency=50
         )

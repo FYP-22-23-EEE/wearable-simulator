@@ -5,9 +5,10 @@ from enum import Enum
 
 
 class DeviceType(Enum):
-    EMPATICA_E4 = 1
-    MUSE_HEADBAND = 2
-    ZHEPHYR = 3
+    E4 = 1
+    MUSE = 2
+    ZEPHYR = 3
+    EARBUDS = 4
 
 
 class Activity(Enum):

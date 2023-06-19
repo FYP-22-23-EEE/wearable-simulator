@@ -5,6 +5,7 @@ import eventlet
 import socketio
 
 from device.devices import EmpaticaE4
+from app import App
 
 eventlet.monkey_patch()
 
@@ -53,5 +54,5 @@ if __name__ == '__main__':
 
     eventlet.spawn(consume_data)
 
-    # start server
+    # start
     server.start()

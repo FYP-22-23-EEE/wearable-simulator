@@ -6,15 +6,12 @@ name = "pypi"
 [packages]
 pandas = "*"
 numpy = "*"
-gradio = "*"
 asyncio = "*"
 websockets = "*"
-socketio = "*"
 python-socketio = "*"
 eventlet = "*"
 websocket-client = "*"
-setuptools = "*"
-streamlit = "*"
+flet = "*"
 
 [dev-packages]
 
