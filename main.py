@@ -1,58 +1,32 @@
-import json
 import time
 
 import eventlet
-import socketio
 
-from device.devices import EmpaticaE4
-from app import App
+from app import SocketServer, AppServer
+from device.devices import E4, DeviceCollection
+from device.source import DeviceType
 
 eventlet.monkey_patch()
 
-
-class SocketServer:
-
-    def __init__(self):
-        self.sio = socketio.Server(
-            async_mode='eventlet',
-            cors_allowed_origins="*",
-            transports=['websocket', 'polling'],
-        )
-        self.app = socketio.WSGIApp(self.sio)
-
-        @self.sio.event
-        def connect(sid, environ):
-            print('connect ', sid)
-
-    def broadcast(self, data):
-        json_data = json.dumps(data, default=lambda x: x.to_dict())
-        self.sio.emit('message', json_data)
-
-    def start(self, port=5000):
-        print(f"Server running on port {port}")
-        eventlet.wsgi.server(eventlet.listen(('0.0.0.0', port)), self.app)
-
-
 if __name__ == '__main__':
-    # initialize instances
-    server = SocketServer()
-    e4 = EmpaticaE4()
+    # stream
+    socket_server = SocketServer()
+    socket_server.start()
 
-    # start devices
-    e4.start()
+    # devices
+    def on_consume_data(data_points):
+        socket_server.broadcast(data_points)
+        print(f"Broadcast {len(data_points)} data points")
+    devices = DeviceCollection(
+        on_consume=on_consume_data,
+        consume_frequency=1,
+    )
+    devices.start_device(DeviceType.E4)
+    devices.start_device(DeviceType.MUSE)
+    devices.start_device(DeviceType.ZEPHYR)
+    devices.start_device(DeviceType.EARBUDS)
+    devices.start()
 
-
-    def consume_data():
-        print("Start consuming data")
-        while True:
-            data = e4.consume_data()
-            if len(data) > 0:
-                server.broadcast(data)
-            print(f"Broadcast {len(data)} data points")
-            time.sleep(0.5)
-
-
-    eventlet.spawn(consume_data)
-
-    # start
-    server.start()
+    # app
+    app_server = AppServer()
+    app_server.start()

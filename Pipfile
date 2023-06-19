@@ -11,7 +11,7 @@ websockets = "*"
 python-socketio = "*"
 eventlet = "*"
 websocket-client = "*"
-flet = "*"
+fastapi = "*"
 
 [dev-packages]
 
