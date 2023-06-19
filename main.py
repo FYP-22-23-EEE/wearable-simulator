@@ -1,4 +1,4 @@
-import time
+import os
 
 import eventlet
 
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # devices
     def on_consume_data(data_points):
         socket_server.broadcast(data_points)
-        print(f"Broadcast {len(data_points)} data points")
+        # print(f"Broadcast {len(data_points)} data points")
     devices = DeviceCollection(
         on_consume=on_consume_data,
         consume_frequency=1,
@@ -28,5 +28,20 @@ if __name__ == '__main__':
     devices.start()
 
     # app
-    app_server = AppServer()
+    def on_state_change(state):
+        if devices.activity != state["activity"]:
+            devices.set_activity(state["activity"])
+        for name in ["e4", "muse", "zephyr", "earbuds"]:
+            dt = DeviceType.from_string(name)
+            if devices.is_device_running(dt) != state["devices"][name]:
+                if state["devices"][name]:
+                    devices.start_device(dt)
+                else:
+                    devices.stop_device(dt)
+
+    app_server = AppServer(
+        ui_api_host=os.environ.get("UI_API_HOST", "0.0.0.0"),
+        ui_api_port=os.environ.get("UI_API_PORT", 5050),
+        on_state_change=on_state_change,
+    )
     app_server.start()

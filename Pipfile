@@ -12,6 +12,7 @@ python-socketio = "*"
 eventlet = "*"
 websocket-client = "*"
 fastapi = "*"
+pydantic = "*"
 
 [dev-packages]
 

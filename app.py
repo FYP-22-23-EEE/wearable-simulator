@@ -5,8 +5,12 @@ import socketio
 import uvicorn
 from eventlet import wsgi
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+from device.source import Activity, DeviceType
 
 
 class SocketServer:
@@ -36,28 +40,90 @@ class SocketServer:
         print(f"Socket server started on port {port}")
 
 
-class Endpoint:
-    path: str
+class ReqActivity(BaseModel):
+    activity: str
 
-    def __init__(self, app: FastAPI):
-        self.app = app
+
+class ReqDeviceState(BaseModel):
+    device: str
+    state: bool
 
 
 class AppServer:
-    def __init__(self):
+    def __init__(self, ui_api_host, ui_api_port, on_state_change=None):
+        self.ui_api_host = ui_api_host
+        self.ui_api_port = ui_api_port
+        self.on_state_change = on_state_change
+
         self.app = FastAPI(title="Energy Expenditure Estimation")
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
         self.configure()
+        self.state = {
+            "activity": "idle",
+            "devices": {
+                "e4": False,
+                "muse": False,
+                "zephyr": False,
+                "earbuds": False,
+            }
+        }
+
+    def get_state(self):
+        return {
+            "activity": Activity.from_string(self.state["activity"]),
+            "devices": {
+                DeviceType.E4: self.state["devices"]["e4"],
+                DeviceType.MUSE: self.state["devices"]["muse"],
+                DeviceType.ZEPHYR: self.state["devices"]["zephyr"],
+                DeviceType.EARBUDS: self.state["devices"]["earbuds"],
+            }
+        }
 
     def configure(self):
         self.app.mount("/ui/static/", StaticFiles(directory="./ui/dist"), name="ui")
 
         @self.app.get("/ui")
-        def read_root():
+        def ui_root():
             return FileResponse("./ui/dist/index.html")
 
         @self.app.get("/")
         async def root():
-            return JSONResponse(content={"message": "Hello World"})
+            return RedirectResponse(url="/ui")
+
+        @self.app.get("/config")
+        async def config():
+            return JSONResponse({
+                "host": self.ui_api_host,
+                "port": self.ui_api_port,
+            })
+
+        @self.app.get("/api/state")
+        async def get_state():
+            return JSONResponse(self.state)
+
+        @self.app.post("/api/activity")
+        async def set_activity(activity: ReqActivity):
+            self.state["activity"] = activity.activity
+            if self.on_state_change is not None:
+                self.on_state_change(self.state)
+            return self.state["activity"]
+
+        @self.app.post("/api/device/state")
+        async def set_device(device: ReqDeviceState):
+            device.device = device.device.lower()
+            if device.device in self.state["devices"]:
+                self.state["devices"][device.device] = device.state
+                if self.on_state_change is not None:
+                    self.on_state_change(self.state)
+                return {"message": "Device state updated successfully"}
+            else:
+                return {"message": "Device not found"}
 
     def start(self, port=5050):
         uvicorn.run(self.app, host="0.0.0.0", port=port)

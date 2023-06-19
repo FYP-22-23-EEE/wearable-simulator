@@ -10,11 +10,37 @@ class DeviceType(Enum):
     ZEPHYR = 3
     EARBUDS = 4
 
+    @classmethod
+    def from_string(cls, s):
+        if s.lower() == 'e4':
+            return cls.E4
+        elif s.lower() == 'muse':
+            return cls.MUSE
+        elif s.lower() == 'zephyr':
+            return cls.ZEPHYR
+        elif s.lower() == 'earbuds':
+            return cls.EARBUDS
+
+    def __str__(self):
+        return self.name.lower()
+
 
 class Activity(Enum):
     IDLE = 1
     WALKING = 2
     RUNNING = 3
+
+    @classmethod
+    def from_string(cls, s):
+        if s.lower() == 'idle':
+            return cls.IDLE
+        elif s.lower() == 'walking':
+            return cls.WALKING
+        elif s.lower() == 'running':
+            return cls.RUNNING
+
+    def __str__(self):
+        return self.name.lower()
 
 
 @dataclass

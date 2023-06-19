@@ -27,6 +27,7 @@ class Device:
             self.device_type,
             activity
         )
+        print(f"Device {self.device_type.name} initialized with activity {activity.name}")
         return source
 
     def consume_data(self) -> list[DataPoint]:
