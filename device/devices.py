@@ -1,8 +1,6 @@
 import threading
 import time
 
-import eventlet
-
 from device.source import RandomDataSource, DataPoint, DeviceType, Activity
 
 
@@ -11,7 +9,7 @@ class Device:
     def __init__(self, device_type: DeviceType, frequency=50):
         # immutable attributes
         self.device_type = device_type
-        self.lock = threading.Lock()
+
         self.thread = None
         self.running = False
 
@@ -19,43 +17,48 @@ class Device:
         self.frequency = frequency
 
         # computed attributes
-        self.source = self.init_source(Activity.IDLE)
+        self.buffer_lock = threading.Lock()
+        self.source_lock = threading.Lock()
+        self.source = None
+        self.init_source(Activity.IDLE)
         self.buffer = []
 
     def init_source(self, activity):
-        source = RandomDataSource(
-            self.device_type,
-            activity
-        )
+        with self.source_lock:
+            self.source = RandomDataSource(
+                self.device_type,
+                activity
+            )
         print(f"Device {self.device_type.name} initialized with activity {activity.name}")
-        return source
 
     def consume_data(self) -> list[DataPoint]:
-        with self.lock:
+        with self.buffer_lock:
             data = self.buffer
             self.buffer = []
         return data
 
     def loop(self):
-        while True:
+        while self.running:
             # get data
-            data = next(self.source)
+            with self.source_lock:
+                data = next(self.source)
 
             # add to buffer
-            with self.lock:
+            with self.buffer_lock:
                 self.buffer.append(data)
 
             # sleep
             time.sleep(1 / self.frequency)
 
     def start(self):
-        self.thread = eventlet.spawn(self.loop)
         self.running = True
+        self.thread = threading.Thread(target=self.loop)
+        self.thread.start()
         print(f"Device {self.device_type.name} started")
 
     def stop(self):
         self.running = False
-        self.thread.kill()
+        self.thread.join()
         print(f"Device {self.device_type.name} stopped")
 
 
@@ -97,9 +100,9 @@ class Earbuds(Device):
 
 class DeviceCollection:
 
-    def __init__(self, on_consume=None, consume_frequency=2):
+    def __init__(self, on_consume_data=None, consume_frequency=2):
         self.thread = None
-        self.on_consume = on_consume
+        self.on_consume = on_consume_data
         self.consume_frequency = consume_frequency
         self.activity = Activity.IDLE
         self.devices = {
@@ -108,6 +111,7 @@ class DeviceCollection:
             DeviceType.ZEPHYR: Zephyr(),
             DeviceType.EARBUDS: Earbuds(),
         }
+        self.running = False
 
     def set_activity(self, activity: Activity):
         self.activity = activity
@@ -118,7 +122,7 @@ class DeviceCollection:
 
     def update_device_activity(self):
         for device in self.devices.values():
-            device.source = device.init_source(self.activity)
+            device.init_source(self.activity)
 
     def start_device(self, device_type: DeviceType):
         self.devices[device_type].start()
@@ -130,7 +134,7 @@ class DeviceCollection:
         return self.devices[device_type].running
 
     def run(self):
-        while True:
+        while self.running:
             all_data = []
             for device in filter(lambda d: d.running, self.devices.values()):
                 data = device.consume_data()
@@ -141,9 +145,12 @@ class DeviceCollection:
             time.sleep(1 / self.consume_frequency)
 
     def start(self):
-        self.thread = eventlet.spawn(self.run)
+        self.running = True
+        self.thread = threading.Thread(target=self.run)
+        self.thread.start()
         print("Device collection started")
 
     def stop(self):
-        self.thread.kill()
+        self.running = False
+        self.thread.join()
         print("Device collection stopped")

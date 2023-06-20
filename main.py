@@ -1,41 +1,20 @@
 import os
+import time
 
-import eventlet
-
-from app import SocketServer, AppServer
 from device.devices import DeviceCollection
 from device.source import DeviceType
-
-if __name__ == '__main__':
-    eventlet.monkey_patch()
-
-    # app server
-    app_server = AppServer(
-        ui_api_host=os.environ.get("UI_API_HOST", "localhost"),
-        ui_api_port=os.environ.get("UI_API_PORT", 5050),
-        # on_state_change=on_state_change,
-    )
-    app_server.start()
+from app import AppServer
+import asyncio
 
 
-
-    # stream
-    socket_server = SocketServer()
-    socket_server.start()
-
-    # devices
+def main():
+    # events
     def on_consume_data(data_points):
-        socket_server.broadcast(data_points)
+        print("Consuming data points:", len(data_points))
+        while app_server.event_loop is None or app_server.event_loop.is_closed():
+            time.sleep(0.1)
+        asyncio.run_coroutine_threadsafe(app_server.socket.broadcast(data_points), app_server.event_loop)
 
-
-    devices = DeviceCollection(
-        on_consume=on_consume_data,
-        consume_frequency=1,
-    )
-    devices.start()
-
-
-    # app
     def on_state_change(state):
         if devices.activity != state["activity"]:
             devices.set_activity(state["activity"])
@@ -47,5 +26,22 @@ if __name__ == '__main__':
                 else:
                     devices.stop_device(dt)
 
+    # init
+    app_server = AppServer(
+        ui_api_host=os.environ.get("UI_API_HOST", "localhost"),
+        ui_api_port=os.environ.get("UI_API_PORT", 5050),
+        on_state_change=on_state_change,
+    )
+    devices = DeviceCollection(
+        consume_frequency=1,
+        on_consume_data=on_consume_data,
+    )
 
-    app_server.on_state_change = on_state_change
+    # start
+    devices.start()
+    devices.start_device(DeviceType.E4)
+    app_server.start()
+
+
+if __name__ == '__main__':
+    main()

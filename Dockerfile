@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the backend code except ui
 COPY device ./device
 COPY main.py ./
-COPY app.py ./
+COPY app/__init__.py ./
 
 # Copy the frontend build from the previous stage
 COPY --from=build /usr/src/app/dist ./ui/dist

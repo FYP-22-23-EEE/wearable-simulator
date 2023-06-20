@@ -23,4 +23,4 @@ def message(data):
 
 
 if __name__ == '__main__':
-    sio.connect('http://127.0.0.1:5000')
+    sio.connect('ws://localhost:5050', socketio_path='/stream/socket.io')

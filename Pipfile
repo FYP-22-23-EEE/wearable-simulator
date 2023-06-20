@@ -16,6 +16,7 @@ pydantic = "*"
 requests = "*"
 aiofiles = "*"
 uvicorn = {extras = ["standard"], version = "*"}
+fastapi-socketio = "*"
 
 [dev-packages]
 
