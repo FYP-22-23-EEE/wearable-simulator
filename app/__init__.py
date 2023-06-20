@@ -61,12 +61,12 @@ class AppServer:
         if self.on_state_change:
             self.on_state_change(self.get_state())
 
-    def run(self, port):
+    def run(self):
         uvicorn.run(
             self.app,
-            host=os.environ.get("APP_HOST", "localhost"),
-            port=os.environ.get("APP_PORT", port),
+            host=self.host,
+            port=self.port,
         )
 
-    def start(self, port=5050):
-        self.run(port)
+    def start(self):
+        self.run()

@@ -34,7 +34,7 @@ def main():
     # init
     app_server = AppServer(
         host=os.environ.get("APP_HOST", "localhost"),
-        port=os.environ.get("APP_PORT", 5050),
+        port=int(os.environ.get("APP_PORT", 5000)),
         public_url=os.environ.get("APP_PUBLIC_URL", "http://localhost:5050"),
         on_state_change=on_state_change,
         on_started=on_started,
