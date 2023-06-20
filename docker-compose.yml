@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   wearable-simulator:
+    container_name: wearable-simulator
     build:
       context: .
       dockerfile: Dockerfile
