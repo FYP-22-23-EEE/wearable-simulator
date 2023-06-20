@@ -4,6 +4,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: wearable-simulator
     ports:
       - "5000:5000"
-      - "5050:5050"
+    environment:
+      - APP_HOST='0.0.0.0'
+      - APP_PORT=5000
+      - APP_PUBLIC_URL='http://0.0.0.0:5000'

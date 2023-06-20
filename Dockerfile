@@ -36,7 +36,5 @@ ENV APP_HOST=localhost
 ENV APP_PORT=5000
 ENV APP_PUBLIC_URL='http://localhost:5000'
 
-EXPOSE 5000
-
 # Run the application
 CMD [ "python", "./main.py" ]
