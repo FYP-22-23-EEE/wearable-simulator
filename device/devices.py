@@ -67,7 +67,7 @@ class E4(Device):
     def __init__(self):
         super().__init__(
             device_type=DeviceType.E4,
-            frequency=10
+            frequency=50
         )
 
 
@@ -76,7 +76,7 @@ class Muse(Device):
     def __init__(self):
         super().__init__(
             device_type=DeviceType.MUSE,
-            frequency=10
+            frequency=50
         )
 
 
@@ -85,16 +85,15 @@ class Zephyr(Device):
     def __init__(self):
         super().__init__(
             device_type=DeviceType.ZEPHYR,
-            frequency=10
+            frequency=50,
         )
-
 
 class Earbuds(Device):
 
     def __init__(self):
         super().__init__(
             device_type=DeviceType.EARBUDS,
-            frequency=10
+            frequency=50
         )
 
 
