@@ -114,7 +114,7 @@ class RandomDataSource:
 
         # create a datapoint
         data_point = DataPoint(
-            timestamp=datetime.now(),
+            timestamp=datetime.now(tz=None),
             device=self.device_type,
             x=x,
             y=y,
