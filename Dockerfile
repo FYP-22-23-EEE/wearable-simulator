@@ -16,7 +16,7 @@ COPY ui/ .
 RUN npm run build
 
 # Start a new stage with python image
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /usr/src/app
 
