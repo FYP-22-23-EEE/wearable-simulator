@@ -32,9 +32,9 @@ COPY main.py ./
 # Copy the frontend build from the previous stage
 COPY --from=build /usr/src/app/dist ./ui/dist
 
-ENV APP_HOST='127.0.0.1'
+ENV APP_HOST=0.0.0.0
 ENV APP_PORT=5000
-ENV APP_PUBLIC_URL='http://127.0.0.1:5000'
+ENV APP_PUBLIC_URL=http://0.0.0.0:5000'
 
 # Run the application
 CMD [ "python", "./main.py" ]
