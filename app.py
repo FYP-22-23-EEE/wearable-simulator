@@ -1,4 +1,5 @@
 import json
+import os
 
 import eventlet
 import socketio
@@ -31,13 +32,15 @@ class SocketServer:
         json_data = json.dumps(data, default=lambda x: x.to_dict())
         self.sio.emit('message', json_data)
 
-    def run(self, port=5000):
+    def run(self, port):
         print(f"Server running on port {port}")
-        wsgi.server(eventlet.listen(('0.0.0.0', port)), self.app)
+        wsgi.server(eventlet.listen((
+            os.environ.get("SOCKET_SERVER_HOST", "localhost"),
+            os.environ.get("SOCKET_SERVER_PORT", port),
+        )), self.app)
 
     def start(self, port=5000):
         eventlet.spawn(self.run, port)
-        print(f"Socket server started on port {port}")
 
 
 class ReqActivity(BaseModel):
@@ -63,7 +66,6 @@ class AppServer:
             allow_methods=["*"],
             allow_headers=["*"],
         )
-        self.configure()
         self.state = {
             "activity": "idle",
             "devices": {
@@ -73,6 +75,7 @@ class AppServer:
                 "earbuds": False,
             }
         }
+        self.configure()
 
     def get_state(self):
         return {
@@ -86,7 +89,7 @@ class AppServer:
         }
 
     def configure(self):
-        self.app.mount("/ui/static/", StaticFiles(directory="./ui/dist"), name="ui")
+        self.app.mount("/ui/static/", StaticFiles(directory="./ui/dist"), name="ui_static_files")
 
         @self.app.get("/ui")
         def ui_root():
@@ -125,5 +128,12 @@ class AppServer:
             else:
                 return {"message": "Device not found"}
 
-    def start(self, port=5050):
-        uvicorn.run(self.app, host="0.0.0.0", port=port)
+    def run(self, port):
+        uvicorn.run(
+            self.app,
+            host=os.environ.get("UI_HOST", "localhost"),
+            port=os.environ.get("UI_PORT", port),
+        )
+
+    def start(self, port=6000):
+        eventlet.spawn(self.run, port)

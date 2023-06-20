@@ -1,9 +1,10 @@
 import os
+import time
 
 import eventlet
 
 from app import SocketServer, AppServer
-from device.devices import E4, DeviceCollection
+from device.devices import DeviceCollection
 from device.source import DeviceType
 
 eventlet.monkey_patch()
@@ -11,7 +12,7 @@ eventlet.monkey_patch()
 if __name__ == '__main__':
     # stream
     socket_server = SocketServer()
-    socket_server.start()
+    # socket_server.start()
 
     # devices
     def on_consume_data(data_points):
@@ -21,11 +22,11 @@ if __name__ == '__main__':
         on_consume=on_consume_data,
         consume_frequency=1,
     )
-    devices.start_device(DeviceType.E4)
-    devices.start_device(DeviceType.MUSE)
-    devices.start_device(DeviceType.ZEPHYR)
-    devices.start_device(DeviceType.EARBUDS)
-    devices.start()
+    # devices.start_device(DeviceType.E4)
+    # devices.start_device(DeviceType.MUSE)
+    # devices.start_device(DeviceType.ZEPHYR)
+    # devices.start_device(DeviceType.EARBUDS)
+    # devices.start()
 
     # app
     def on_state_change(state):
@@ -40,8 +41,10 @@ if __name__ == '__main__':
                     devices.stop_device(dt)
 
     app_server = AppServer(
-        ui_api_host=os.environ.get("UI_API_HOST", "0.0.0.0"),
+        ui_api_host=os.environ.get("UI_API_HOST", "localhost"),
         ui_api_port=os.environ.get("UI_API_PORT", 5050),
         on_state_change=on_state_change,
     )
     app_server.start()
+    while True:
+        time.sleep(1)

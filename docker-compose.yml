@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  wearable-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+      - "5050:5050"

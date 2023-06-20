@@ -13,6 +13,9 @@ eventlet = "*"
 websocket-client = "*"
 fastapi = "*"
 pydantic = "*"
+requests = "*"
+aiofiles = "*"
+uvicorn = {extras = ["standard"], version = "*"}
 
 [dev-packages]
 
