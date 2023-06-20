@@ -88,6 +88,7 @@ class Zephyr(Device):
             frequency=50,
         )
 
+
 class Earbuds(Device):
 
     def __init__(self):

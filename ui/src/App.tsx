@@ -77,8 +77,8 @@ function ActivitySelect() {
                     onChange={onChange}>
                 <option>SITTING</option>
                 <option>STANDING</option>
-                <option>WALKING</option>
                 <option>RUNNING</option>
+                <option>CYCLING</option>
             </select>
         </div>
     )
