@@ -20,7 +20,7 @@ class Device:
         self.buffer_lock = threading.Lock()
         self.source_lock = threading.Lock()
         self.source = None
-        self.init_source(Activity.IDLE)
+        self.init_source(Activity.SITTING)
         self.buffer = []
 
     def init_source(self, activity):

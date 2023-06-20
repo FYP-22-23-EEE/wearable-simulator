@@ -75,7 +75,8 @@ function ActivitySelect() {
             </label>
             <select className="select select-bordered select-lg" value={activity}
                     onChange={onChange}>
-                <option>IDLE</option>
+                <option>SITTING</option>
+                <option>STANDING</option>
                 <option>WALKING</option>
                 <option>RUNNING</option>
             </select>
