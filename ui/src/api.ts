@@ -10,11 +10,9 @@ async function getClient() {
     const response = await axios.get(`/config`);
     console.log("config", response.data);
     const config = response.data;
-    const api_host = config.host;
-    const api_port = config.port;
 
     _client = axios.create({
-        baseURL: `http://${api_host}:${api_port}`,
+        baseURL: config.url,
     });
     return _client;
 }

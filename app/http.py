@@ -24,8 +24,7 @@ class HttpHandler:
         @self.app.get("/config")
         async def config():
             return JSONResponse({
-                "host": self.parent.ui_api_host,
-                "port": self.parent.ui_api_port,
+                "url": self.parent.public_url,
             })
 
         @self.app.get("/api/state")

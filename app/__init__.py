@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 import uvicorn
@@ -12,10 +11,12 @@ from device.source import Activity, DeviceType
 
 
 class AppServer:
-    def __init__(self, ui_api_host, ui_api_port, on_state_change=None):
-        self.ui_api_host = ui_api_host
-        self.ui_api_port = ui_api_port
+    def __init__(self, host, port, public_url, on_state_change=None, on_started=None):
+        self.host = host
+        self.port = port
+        self.public_url = public_url
         self.on_state_change = on_state_change
+        self.on_started = on_started
 
         self.app = FastAPI(title="Energy Expenditure Estimation")
 
@@ -32,7 +33,8 @@ class AppServer:
 
         @self.app.on_event("startup")
         async def startup_event():
-            self.event_loop = asyncio.get_running_loop()
+            if self.on_started:
+                await self.on_started()
 
         self.state = {
             "activity": "idle",
@@ -62,8 +64,8 @@ class AppServer:
     def run(self, port):
         uvicorn.run(
             self.app,
-            host=os.environ.get("UI_HOST", "localhost"),
-            port=os.environ.get("UI_PORT", port),
+            host=os.environ.get("APP_HOST", "localhost"),
+            port=os.environ.get("APP_PORT", port),
         )
 
     def start(self, port=5050):

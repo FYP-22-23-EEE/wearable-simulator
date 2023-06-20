@@ -100,11 +100,8 @@ class Earbuds(Device):
 
 class DeviceCollection:
 
-    def __init__(self, on_consume_data=None, consume_frequency=2):
-        self.thread = None
-        self.on_consume = on_consume_data
-        self.consume_frequency = consume_frequency
-        self.activity = Activity.IDLE
+    def __init__(self, activity: Activity):
+        self.activity = activity
         self.devices = {
             DeviceType.E4: E4(),
             DeviceType.MUSE: Muse(),
@@ -133,24 +130,10 @@ class DeviceCollection:
     def is_device_running(self, device_type: DeviceType):
         return self.devices[device_type].running
 
-    def run(self):
-        while self.running:
-            all_data = []
-            for device in filter(lambda d: d.running, self.devices.values()):
-                data = device.consume_data()
-                if len(data) > 0:
-                    all_data.extend(data)
-            if len(all_data) > 0 and self.on_consume is not None:
-                self.on_consume(all_data)
-            time.sleep(1 / self.consume_frequency)
-
-    def start(self):
-        self.running = True
-        self.thread = threading.Thread(target=self.run)
-        self.thread.start()
-        print("Device collection started")
-
-    def stop(self):
-        self.running = False
-        self.thread.join()
-        print("Device collection stopped")
+    def consume_all_data(self):
+        all_data = []
+        for device in filter(lambda d: d.running, self.devices.values()):
+            data = device.consume_data()
+            if len(data) > 0:
+                all_data.extend(data)
+        return all_data
