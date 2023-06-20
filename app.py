@@ -56,7 +56,7 @@ class AppServer:
     def __init__(self, ui_api_host, ui_api_port, on_state_change=None):
         self.ui_api_host = ui_api_host
         self.ui_api_port = ui_api_port
-        self.on_state_change = on_state_change
+        self._on_state_change = on_state_change
 
         self.app = FastAPI(title="Energy Expenditure Estimation")
         self.app.add_middleware(
@@ -88,6 +88,10 @@ class AppServer:
             }
         }
 
+    def notify_state_changes(self):
+        if self._on_state_change:
+            self._on_state_change(self.get_state())
+
     def configure(self):
         self.app.mount("/ui/static/", StaticFiles(directory="./ui/dist"), name="ui_static_files")
 
@@ -112,9 +116,9 @@ class AppServer:
 
         @self.app.post("/api/activity")
         async def set_activity(activity: ReqActivity):
+            print(activity.activity)
             self.state["activity"] = activity.activity
-            if self.on_state_change is not None:
-                self.on_state_change(self.state)
+            self.notify_state_changes()
             return self.state["activity"]
 
         @self.app.post("/api/device/state")
@@ -122,8 +126,7 @@ class AppServer:
             device.device = device.device.lower()
             if device.device in self.state["devices"]:
                 self.state["devices"][device.device] = device.state
-                if self.on_state_change is not None:
-                    self.on_state_change(self.state)
+                self.notify_state_changes()
                 return {"message": "Device state updated successfully"}
             else:
                 return {"message": "Device not found"}
@@ -135,5 +138,6 @@ class AppServer:
             port=os.environ.get("UI_PORT", port),
         )
 
-    def start(self, port=6000):
-        eventlet.spawn(self.run, port)
+    def start(self, port=5050):
+        # eventlet.spawn(self.run, port)
+        self.run(port)
